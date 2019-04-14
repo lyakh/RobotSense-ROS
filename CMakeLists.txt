@@ -130,7 +130,7 @@ include_directories(
 # add_dependencies(robot_sense ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(robot_sense_node src/robot_sense_node.cpp src/sg90.cpp src/RasPiRobot.cpp)
+add_executable(robot_sense_node src/hc_sr04_node.cpp src/sg90.cpp src/RasPiRobot.cpp)
 
 add_executable(sonic_control src/control.cpp)
 
