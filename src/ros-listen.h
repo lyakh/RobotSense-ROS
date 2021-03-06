@@ -3,6 +3,9 @@
  * Copyright (c) 2019, Guennadi Liakhovetski
  */
 
+#ifndef ROS_LISTEN_H
+#define ROS_LISTEN_H
+
 #include <ros/ros.h>
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/TransformStamped.h>
@@ -26,3 +29,5 @@ private:
 };
 
 }
+
+#endif

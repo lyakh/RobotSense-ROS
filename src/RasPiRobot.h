@@ -3,6 +3,9 @@
  * Copyright (c) 2019, Guennadi Liakhovetski
  */
 
+#ifndef RASPIROBOT_H
+#define RASPIROBOT_H
+
 #include <ros/ros.h>
 #include <std_msgs/Float32MultiArray.h>
 
@@ -21,3 +24,5 @@ private:
 };
 
 }
+
+#endif

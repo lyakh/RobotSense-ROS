@@ -21,12 +21,12 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Range.h>
 
+#include "hc_sr04_node.h"
 #include "RasPiRobot.h"
 #include "sg90.h"
 
-#define PIN_TRIGGER 20
-#define PIN_ECHO 21
-#define PIN_PWM 19
+#define PIN_TRIGGER 18
+#define PIN_ECHO 23
 
 namespace robot_sense {
 
@@ -34,30 +34,6 @@ static pid_t gettid(void)
 {
 	return syscall(SYS_gettid);
 }
-
-class hc_sr04_range {
-public:
-	hc_sr04_range();
-	~hc_sr04_range();
-	void spin();
-private:
-#ifdef USE_WIRINGPI
-	static void isr(void *arg);
-#else
-	static void isr(int gpio, int level, uint32_t tick, void *arg);
-#endif
-
-	ros::NodeHandle nh;
-	ros::Publisher range_publisher;
-
-	sg90 *motor;
-	RasPiRobot *chassis;
-
-	struct timeval tv_recv;
-	pthread_mutex_t mutex;
-	pthread_cond_t cond;
-	unsigned int seq;
-};
 
 hc_sr04_range::hc_sr04_range() :
 	seq(0)
@@ -100,7 +76,7 @@ hc_sr04_range::hc_sr04_range() :
 	pthread_cond_init(&cond, NULL);
 
 	// Publishers
-	range_publisher = nh.advertise<sensor_msgs::Range>("sonar", 5);
+	range_publisher = nh.advertise<sensor_msgs::Range>("/sonar", 5);
 
 	motor = new sg90(nh);
 	chassis = new RasPiRobot(nh);

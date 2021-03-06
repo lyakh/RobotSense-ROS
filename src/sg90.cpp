@@ -22,8 +22,11 @@
 #define FRONT_STEPS 80
 #else
 #define PI_STEPS 1200
-#define FRONT_STEPS 1000
+#define FRONT_STEPS 1200
 #endif
+
+#define LIMIT_MIN (-PI_STEPS / 2)
+#define LIMIT_MAX (PI_STEPS / 8)
 
 namespace robot_sense {
 
@@ -46,6 +49,10 @@ void sg90::angleCallback(const std_msgs::Float32& msg)
 #else
 	gpioServo(PIN_PWM, FRONT_STEPS + angle);
 #endif
+
+	std_msgs::Float32 angle_msg;
+	angle_msg.data = angle;
+	angle_publisher.publish(angle_msg);
 
 	geometry_msgs::TransformStamped transformStamped;
 
@@ -77,6 +84,11 @@ sg90::sg90(ros::NodeHandle &nh)
 #endif
 
 	sub = nh.subscribe("/sonar/angle", 10, &angleCallback);
+	if (sub)
+		printf("Subscribed to angle\n");
+	else
+		printf("Failed to subscribe to angle\n");
+	angle_publisher = nh.advertise<std_msgs::Float32>("/sonar/angle", 5);
 }
 
 }

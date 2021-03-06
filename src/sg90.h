@@ -3,6 +3,9 @@
  * Copyright (c) 2019, Guennadi Liakhovetski
  */
 
+#ifndef SG90_H
+#define SG90_H
+
 #include <ros/ros.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <std_msgs/Float32.h>
@@ -16,6 +19,9 @@ public:
 private:
 	static void angleCallback(const std_msgs::Float32& msg);
 	ros::Subscriber sub;
+	ros::Publisher angle_publisher;
 };
 
 }
+
+#endif

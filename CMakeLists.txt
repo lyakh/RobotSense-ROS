@@ -10,6 +10,8 @@ project(robot_sense)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
+  tf2
+  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -144,7 +146,7 @@ add_executable(net_control src/srv.cpp src/ros-listen.cpp)
 target_link_libraries(robot_sense_node
   ${catkin_LIBRARIES}
   wiringPi
-  tf2_ros
+  pigpio
 )
 
 target_link_libraries(sonic_control
@@ -153,8 +155,6 @@ target_link_libraries(sonic_control
 
 target_link_libraries(net_control
   ${catkin_LIBRARIES}
-  tf2
-  tf2_ros
   z
   crypto
   ssl
