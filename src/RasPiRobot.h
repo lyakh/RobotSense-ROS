@@ -8,6 +8,8 @@
 
 #include <ros/ros.h>
 #include <std_msgs/Float32MultiArray.h>
+#include <geometry_msgs/Twist.h>
+#include <sensor_msgs/Range.h>
 
 namespace robot_sense {
 
@@ -15,12 +17,24 @@ class RasPiRobot {
 public:
 	RasPiRobot(ros::NodeHandle &nh);
 	~RasPiRobot() {}
+	void twistCallback(const geometry_msgs::Twist::ConstPtr& twist);
+	void sonarCallback(const sensor_msgs::Range::ConstPtr& range);
 private:
 	int GetRpiRevision(void);
-	static void driveCallback(const std_msgs::Float32MultiArray::ConstPtr& drive);
+	void doDrive(float linear, float angular);
 
 	int OC2_PIN;
-	ros::Subscriber sub;
+
+	enum chassis_state {
+		CHASSIS_STOP,
+		CHASSIS_FORWARD,
+		CHASSIS_BACKWARD,
+		CHASSIS_LEFT,
+		CHASSIS_RIGHT,
+		CHASSIS_RECOVER,
+	};
+	enum chassis_state state;
+	unsigned int recover_count;
 };
 
 }

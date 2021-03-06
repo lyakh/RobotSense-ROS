@@ -22,10 +22,10 @@
 #define FRONT_STEPS 80
 #else
 #define PI_STEPS 1200
-#define FRONT_STEPS 1200
+#define FRONT_STEPS 1350
 #endif
 
-#define LIMIT_MIN (-PI_STEPS / 2)
+#define LIMIT_MIN (PI_STEPS / 16 - PI_STEPS / 2)
 #define LIMIT_MAX (PI_STEPS / 8)
 
 namespace robot_sense {
@@ -38,11 +38,11 @@ void sg90::angleCallback(const std_msgs::Float32& msg)
 
 	fprintf(stderr, "%s(): %f %d\n", __FUNCTION__, msg.data, angle);
 
-	if (angle < -PI_STEPS / 4)
-		angle = -PI_STEPS / 4;
+	if (angle < LIMIT_MIN)
+		angle = LIMIT_MIN;
 
-	if (angle > PI_STEPS / 4)
-		angle = PI_STEPS / 4;
+	if (angle > LIMIT_MAX)
+		angle = LIMIT_MAX;
 
 #ifdef USE_WIRINGPI
 	pwmWrite(PIN_PWM, FRONT_STEPS + angle);
@@ -51,7 +51,7 @@ void sg90::angleCallback(const std_msgs::Float32& msg)
 #endif
 
 	std_msgs::Float32 angle_msg;
-	angle_msg.data = angle;
+	angle_msg.data = angle * pi / PI_STEPS;
 	angle_publisher.publish(angle_msg);
 
 	geometry_msgs::TransformStamped transformStamped;
@@ -83,12 +83,7 @@ sg90::sg90(ros::NodeHandle &nh)
 	gpioSetMode(PIN_PWM, PI_OUTPUT);
 #endif
 
-	sub = nh.subscribe("/sonar/angle", 10, &angleCallback);
-	if (sub)
-		printf("Subscribed to angle\n");
-	else
-		printf("Failed to subscribe to angle\n");
-	angle_publisher = nh.advertise<std_msgs::Float32>("/sonar/angle", 5);
+	angle_publisher = nh.advertise<std_msgs::Float32>("/sonar/angle/pub", 5);
 }
 
 }

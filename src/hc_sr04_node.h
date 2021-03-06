@@ -24,13 +24,17 @@ private:
 	ros::NodeHandle nh;
 	ros::Publisher range_publisher;
 
-	sg90 *motor;
-	RasPiRobot *chassis;
-
 	struct timeval tv_recv;
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
 	unsigned int seq;
+
+	boost::shared_ptr<sg90> tilt;
+	ros::Subscriber tilt_sub;
+
+	boost::shared_ptr<RasPiRobot> chassis;
+	ros::Subscriber chassis_sub;
+	ros::Subscriber dist_sub;
 };
 
 }

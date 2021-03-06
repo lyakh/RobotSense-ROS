@@ -134,9 +134,9 @@ include_directories(
 ## Declare a C++ executable
 add_executable(robot_sense_node src/hc_sr04_node.cpp src/sg90.cpp src/RasPiRobot.cpp)
 
-add_executable(sonic_control src/control.cpp)
+#add_executable(sonic_control src/control.cpp)
 
-add_executable(net_control src/srv.cpp src/ros-listen.cpp)
+#add_executable(net_control src/srv.cpp src/ros-listen.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -149,16 +149,16 @@ target_link_libraries(robot_sense_node
   pigpio
 )
 
-target_link_libraries(sonic_control
-  ${catkin_LIBRARIES}
-)
+#target_link_libraries(sonic_control
+#  ${catkin_LIBRARIES}
+#)
 
-target_link_libraries(net_control
-  ${catkin_LIBRARIES}
-  z
-  crypto
-  ssl
-)
+#target_link_libraries(net_control
+#  ${catkin_LIBRARIES}
+#  z
+#  crypto
+#  ssl
+#)
 
 #############
 ## Install ##
@@ -176,7 +176,8 @@ target_link_libraries(net_control
 
 # Mark executables and/or libraries for installation
 #install(TARGETS robot_sense robot_sense_node sonic_control
-install(TARGETS robot_sense_node sonic_control net_control
+#install(TARGETS robot_sense_node sonic_control net_control
+install(TARGETS robot_sense_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

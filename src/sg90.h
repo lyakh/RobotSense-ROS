@@ -16,9 +16,8 @@ class sg90 {
 public:
 	sg90(ros::NodeHandle &nh);
 	~sg90() {}
+	void angleCallback(const std_msgs::Float32& msg);
 private:
-	static void angleCallback(const std_msgs::Float32& msg);
-	ros::Subscriber sub;
 	ros::Publisher angle_publisher;
 };
 

@@ -78,8 +78,16 @@ hc_sr04_range::hc_sr04_range() :
 	// Publishers
 	range_publisher = nh.advertise<sensor_msgs::Range>("/sonar", 5);
 
-	motor = new sg90(nh);
-	chassis = new RasPiRobot(nh);
+	chassis = boost::make_shared<RasPiRobot>(nh);
+	chassis_sub = nh.subscribe("/chassis_twist", 10, &RasPiRobot::twistCallback, chassis);
+	dist_sub = nh.subscribe("/sonar", 10, &RasPiRobot::sonarCallback, chassis);
+
+	tilt = boost::make_shared<sg90>(nh);
+	tilt_sub = nh.subscribe("/sonar/angle/sub", 10, &sg90::angleCallback, tilt);
+	if (chassis_sub && dist_sub && tilt_sub)
+		printf("Successfully subscribed to all\n");
+	else
+		printf("Failed to subscribe\n");
 }
 
 hc_sr04_range::~hc_sr04_range()
@@ -148,7 +156,7 @@ void hc_sr04_range::spin()
 // FIXME: handle +/-Infinity
 		}
 
-		printf("diff %f\n", (t - t0) * 0.17);
+		//printf("diff %f\n", (t - t0) * 0.17);
 
 		range_msg.header.frame_id = "ultrasound_front";
 		range_msg.header.stamp = ros::Time::now();

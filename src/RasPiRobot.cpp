@@ -10,6 +10,9 @@
 #include <pigpio.h>
 #endif
 #include <std_msgs/Float32MultiArray.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <geometry_msgs/Twist.h>
+#include <sensor_msgs/Range.h>
 
 #include "RasPiRobot.h"
 
@@ -34,54 +37,75 @@ namespace robot_sense {
 #define BATTERY_VOLTAGE 10.6
 #define MOTOR_VOLTAGE 6.
 
-void RasPiRobot::driveCallback(const std_msgs::Float32MultiArray::ConstPtr& drive)
+#define CHASSIS_MIN_RANGE 600
+
+void RasPiRobot::doDrive(float linear, float angular)
 {
-	if (drive->layout.dim[0].size != 2) {
-		fprintf(stderr, "size = %d\n", drive->layout.dim[0].size);
-		return;
-	}
+	int left_dir = 0;
+	int right_dir = 0;
 
-	std::vector<float>::const_iterator it = drive->data.begin();
-
-	float left = it[0];
-	float right = it[1];
-
-	printf("received %f, %f\n", left, right);
-
-#ifdef USE_WIRINGPI
-	int left_dir = left < 0 ? LOW : HIGH;
-	int right_dir = right < 0 ? LOW : HIGH;
-#else
-	int left_dir = left < 0 ? 0 : 1;
-	int right_dir = right < 0 ? 0 : 1;
-#endif
-
-	left = fabs(left);
-	right = fabs(right);
-
-	if (left > 1.)
-		left = 1.;
-
-	if (right > 1.)
-		right = 1.;
-
+	float spin = 0.;
 	float voltage_ratio = MOTOR_VOLTAGE / BATTERY_VOLTAGE;
 
-#ifdef USE_WIRINGPI
-	pwmWrite(LEFT_PWM_PIN, (int)(255. * left));
-	digitalWrite(LEFT_DIR_PIN, !left_dir);
-	digitalWrite(LEFT_GO_PIN, left_dir);
-	pwmWrite(RIGHT_PWM_PIN, (int)(255. * right));
-	digitalWrite(RIGHT_DIR_PIN, !right_dir);
-	digitalWrite(RIGHT_GO_PIN, right_dir);
+	if (angular > 0) {
+		right_dir = 1;
+		spin = .5;
+		if (state != CHASSIS_RECOVER)
+			state = CHASSIS_RIGHT;
+	} else if (angular < 0) {
+		left_dir = 1;
+		spin = .5;
+		state = CHASSIS_LEFT;
+	} else if (linear > 0) {
+		left_dir = 1;
+		right_dir = 1;
+		spin = 1.;
+		state = CHASSIS_FORWARD;
+	} else if (linear < 0) {
+		spin = 1.;
+		if (state != CHASSIS_RECOVER)
+			state = CHASSIS_BACKWARD;
+	} else {
+		state = CHASSIS_STOP;
+	}
+
+	printf("%s(): left %d right %d spin %f\n", __FUNCTION__, left_dir, right_dir, spin);
+
+	gpioPWM(LEFT_PWM_PIN, (int)(255. * spin * voltage_ratio));
+	gpioWrite(LEFT_GO_PIN, !left_dir);
+	gpioWrite(LEFT_DIR_PIN, left_dir);
+	gpioPWM(RIGHT_PWM_PIN, (int)(255. * spin * voltage_ratio));
+	gpioWrite(RIGHT_GO_PIN, !right_dir);
+	gpioWrite(RIGHT_DIR_PIN, right_dir);
+}
+
+void RasPiRobot::sonarCallback(const sensor_msgs::Range::ConstPtr& range)
+{
+	switch (state) {
+	case CHASSIS_FORWARD:
+		if (range->range < CHASSIS_MIN_RANGE) {
+			state = CHASSIS_RECOVER;
+#ifdef TRY_TO_TURN_ON_TOO_CLOSE
+			doDrive(0., 1.);
+			recover_count = 3;
 #else
-	gpioPWM(LEFT_PWM_PIN, (int)(255. * left * voltage_ratio));
-	gpioWrite(LEFT_DIR_PIN, !left_dir);
-	gpioWrite(LEFT_GO_PIN, left_dir);
-	gpioPWM(RIGHT_PWM_PIN, (int)(255. * right * voltage_ratio));
-	gpioWrite(RIGHT_DIR_PIN, !right_dir);
-	gpioWrite(RIGHT_GO_PIN, right_dir);
+			doDrive(-1., 0.);
 #endif
+		}
+		break;
+	case CHASSIS_RECOVER:
+#ifdef TRY_TO_TURN_ON_TOO_CLOSE
+		if (range->range >= CHASSIS_MIN_RANGE && !--recover_count)
+			doDrive(1., 0.);
+#else
+		doDrive(0., 0.);
+#endif
+	}
+}
+
+void RasPiRobot::twistCallback(const geometry_msgs::Twist::ConstPtr& twist)
+{
+	doDrive(twist->linear.x, twist->angular.z);
 }
 
 // Get CPU hardware revision
@@ -162,8 +186,6 @@ RasPiRobot::RasPiRobot(ros::NodeHandle &nh)
 	gpioSetMode(RIGHT_DIR_PIN, PI_OUTPUT);
 	gpioSetMode(RIGHT_PWM_PIN, PI_OUTPUT);
 #endif
-
-	sub = nh.subscribe("/chassis", 10, &driveCallback);
 }
 
 }
